@@ -1,4 +1,4 @@
-.secret_key
+retent_restful.secret_key
 
 ### Django ###
 *.log
