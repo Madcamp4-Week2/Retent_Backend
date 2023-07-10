@@ -8,10 +8,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import FileUploadParser
-from rest_framework.decorators import api_view
+from rest_framework.decorators import action
+from .secret_key import OPENAI_SECRET_KEY
 
 
-openai.api_key =  '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'
+openai.api_key =  OPENAI_SECRET_KEY
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer

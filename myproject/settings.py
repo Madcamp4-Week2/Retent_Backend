@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from  retent_restful.secret_key import SQL_SECRET_KEY
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -81,7 +82,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'Retent',
         'USER': 'root',
-        'PASSWORD': '12345678',
+        'PASSWORD': SQL_SECRET_KEY,
         'HOST': 'retent.cowk0wdtrdkj.ap-northeast-2.rds.amazonaws.com',  # 또는 해당하는 엔드포인트
         'PORT': '3306',  # MySQL의 기본 포트는 3306입니다
     }
