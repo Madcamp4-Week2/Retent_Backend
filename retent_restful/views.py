@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from rest_framework import viewsets
-from .models import User, Deck, Card, Tag, TagToCard
-from .serializers import UserSerializer, DeckSerializer, CardSerializer, TagSerializer, TagToCardSerializer
+from .models import User, Deck, Card, Tag, TagToCard,DeckHistory
+from .serializers import UserSerializer, DeckSerializer, CardSerializer, TagSerializer, TagToCardSerializer,DeckHistorySerializer
 import openai
 import fitz
 from rest_framework.views import APIView
@@ -16,8 +16,10 @@ openai.api_key =  OPENAI_SECRET_KEY
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
+
     def get_queryset(self):
         return User.objects.filter(status=1)
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = 0  
@@ -27,18 +29,53 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class DeckViewSet(viewsets.ModelViewSet):
     serializer_class = DeckSerializer
+
     def get_queryset(self):
         return Deck.objects.filter(status=1)
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = 0  
         instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
     @action(detail=False, methods=['GET'], url_path='user_decks/(?P<userId>\d+)')
     def user_decks(self, request, userId=None):
         queryset = Deck.objects.filter(user_id=userId)
         serializer = DeckSerializer(queryset, many=True)
         return Response(serializer.data)
+        
+
+class DeckHistoryViewSet(viewsets.ModelViewSet):
+    serializer_class = DeckHistorySerializer
+
+    def get_queryset(self):
+        return User.objects.filter(status=1)
+    
+    @action(detail=False, methods=['POST'])
+    def save_history(self, request, deckId=None):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(deck_id=deckId)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.status = 0  
+        instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def update(self, request, *args, **kwargs):
+        # Return "405 Method Not Allowed"
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    @action(detail=False, methods=['get'],url_path='recently')
+    def latest_history(self, request):
+        latest_deck_history = DeckHistory.objects.latest('createdAt')
+        serializer = self.get_serializer(latest_deck_history)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
 class CardViewSet(viewsets.ModelViewSet):
     serializer_class = CardSerializer
@@ -73,6 +110,7 @@ class TagViewSet(viewsets.ModelViewSet):
 class TagToCardViewSet(viewsets.ModelViewSet):
     queryset = TagToCard.objects.all()
     serializer_class = TagToCardSerializer
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = 0  
@@ -130,8 +168,8 @@ def sendGPT(text,deckId):
                 {"role": "user", "content": chunk},
             ]
         )
-            
         responses="".join((responses,completion.choices[0].message.content))
+
     for response in responses.split('\n'):
         question, answer = response.split(':', 1)      
         card = Card(question=question.strip(), answer=answer.strip(), cardListId=deckId)

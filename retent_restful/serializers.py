@@ -24,7 +24,7 @@ class TagSerializer(serializers.ModelSerializer):
 class TagToCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = TagToCard
-        fields = ('tag','card')
+        fields = ('deck','tag')
 
 class DeckHistorySerializer(serializers.ModelSerializer):
     class Meta:

@@ -26,8 +26,7 @@ SECRET_KEY = 'django-insecure-i%6!5m#%^46612+@2sjuy%hmoes@pam9c==vq+0vjunw=ua6!!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['bde5-143-248-38-116.ngrok-free.app', '127.0.0.1']
-
+ALLOWED_HOSTS = ['*',' https://33ea-143-248-200-33.ngrok-free.app']
 
 # Application definition
 
@@ -41,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'retent_restful',
     'drf_yasg', 
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -51,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', 
 ]
 
 ROOT_URLCONF = 'myproject.urls'
@@ -129,3 +130,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ALLOW_CREDENTIALS = True
+

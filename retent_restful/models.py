@@ -39,8 +39,8 @@ class TagToCard(models.Model):
     createAt = models.DateTimeField(auto_now_add=True)
     updateAt = models.DateTimeField(auto_now=True)
     status = models.BooleanField(default=True)
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
-    card = models.ForeignKey(Card, on_delete=models.CASCADE)
+    deck = models.ForeignKey(Deck, on_delete=models.CASCADE, related_name='deck_tags')
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE,related_name='tag_cards')
 
 class DeckHistory(models.Model):
     deckAnswerTime = models.IntegerField()
