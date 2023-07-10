@@ -41,16 +41,17 @@ class DeckViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 class CardViewSet(viewsets.ModelViewSet):
-    serializer_class = TagSerializer
-    def get_queryset(self):
-        return Tag.objects.filter(status=1)
+    serializer_class = CardSerializer
+
     def get_queryset(self):
         return Card.objects.filter(status=1)
+
     @action(detail=False, methods=['GET'], url_path='deck_cards/(?P<deck_id>\d+)')
     def deck_cards(self, request, deck_id=None):
         queryset = Card.objects.filter(cardListId=deck_id)
         serializer = CardSerializer(queryset, many=True)
         return Response(serializer.data)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = 0  
@@ -58,9 +59,11 @@ class CardViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class TagViewSet(viewsets.ModelViewSet):
-    serializer_class = TagToCardSerializer
+    serializer_class = TagSerializer
+
     def get_queryset(self):
-        return TagToCard.objects.filter(status=1)
+        return Tag.objects.filter(status=1)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = 0  

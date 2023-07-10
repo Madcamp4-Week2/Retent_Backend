@@ -15,7 +15,6 @@ class Deck(models.Model):
     deckName = models.CharField(max_length=100, default='sample')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     deckFavorite = models.BooleanField(default=False)
-    averageAnswerTime = models.CharField(max_length=255, null=True)
 
 class Card(models.Model):
     createAt = models.DateTimeField(auto_now_add=True)
@@ -24,7 +23,7 @@ class Card(models.Model):
     answerCorrect = models.BooleanField(default=False)
     question = models.CharField(max_length=300)
     answer = models.CharField(max_length=400)
-    interval = models.IntegerField()
+    interval = models.IntegerField(null=True)
     deck = models.ForeignKey(Deck, on_delete=models.CASCADE)
     answerTime = models.IntegerField(null=True)
     cardFavorite = models.BooleanField(default=False)
