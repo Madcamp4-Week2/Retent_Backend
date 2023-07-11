@@ -1,12 +1,37 @@
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
-class User(models.Model):
+class UserManager(BaseUserManager):
+
+    def create_user(self, email, password, nickname, **kwargs):
+        if not email:
+            raise ValueError('Users must have an email address')
+        if not nickname:
+            raise ValueError('Users must have a nickname')
+
+        user = self.model(
+            emailAddress=email,
+            nickname=nickname,
+            **kwargs
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+class User(AbstractBaseUser, PermissionsMixin):
     createAt = models.DateTimeField(auto_now_add=True)
     updateAt = models.DateTimeField(auto_now=True)
     status = models.BooleanField(default=True)
     emailAddress = models.EmailField(unique=True)
-    password = models.CharField(max_length=255)
     nickname = models.CharField(max_length=45)
+    kakao_id = models.CharField(max_length=255, unique=True, null=True)  # 추가된 부분
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'emailAddress'
+    REQUIRED_FIELDS = ['nickname']
+
+
 
 class Deck(models.Model):
     createAt = models.DateTimeField(auto_now_add=True)
@@ -48,3 +73,4 @@ class DeckHistory(models.Model):
     status = models.BooleanField(default=True)
     accuracy = models.FloatField(default=0)
     deck = models.ForeignKey(Deck, on_delete=models.CASCADE)
+

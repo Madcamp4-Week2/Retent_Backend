@@ -10,15 +10,36 @@ from rest_framework import status
 from rest_framework.parsers import FileUploadParser
 from rest_framework.decorators import action
 from .secret_key import OPENAI_SECRET_KEY
+from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from django.contrib.auth import get_user_model
+from django.shortcuts import redirect
+import requests
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 openai.api_key =  OPENAI_SECRET_KEY
+
+def get_user_id_from_token(request):
+    authorization = request.headers.get('Authorization')
+    if authorization is None:
+        return None
+    token = authorization.split(' ')[1]
+    try:
+        untyped_token = UntypedToken(token)
+    except (InvalidToken, TokenError) as e:
+        raise InvalidToken('Given token not valid')
+
+    user_id = untyped_token['user_id']
+    return user_id
+
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
     def get_queryset(self):
-        return User.objects.filter(status=1)
+        user_id = get_user_id_from_token(self.request)
+        return User.objects.filter(id=user_id, status=1)
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -117,6 +138,28 @@ class TagToCardViewSet(viewsets.ModelViewSet):
         instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    def update(self, request, *args, **kwargs):
+        # Return "405 Method Not Allowed"
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    def retrieve(self, request, *args, **kwargs):
+        # Return "405 Method Not Allowed"
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    
+    @action(detail=False, methods=['GET'], url_path='deck_cards/(?P<deck_id>\d+)')
+    def deck_cards(self, request, deck_id=None):
+        queryset = TagToCard.objects.filter(deck_id=deck_id)
+        serializer = TagToCardSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['GET'], url_path='tags/(?P<tag_id>\d+)')
+    def deck_cards(self, request, tag_id=None):
+        queryset = TagToCard.objects.filter(tag_id=tag_id)
+        serializer = TagToCardSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 
 class PDFUploadView(APIView):
     parser_class = (FileUploadParser,)
@@ -174,3 +217,25 @@ def sendGPT(text,deckId):
         question, answer = response.split(':', 1)      
         card = Card(question=question.strip(), answer=answer.strip(), cardListId=deckId)
         card.save()
+
+class KakaoLoginView(APIView):
+    def post(self, request):
+        kakao_token = request.data.get('kakao_token', None)
+        if kakao_token is None:
+            return Response({"error": "No kakao_token provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_info = requests.get(
+            "https://kapi.kakao.com/v2/user/me",
+            headers={"Authorization": f"Bearer {kakao_token}"}
+        ).json()
+
+        kakao_id = user_info.get('id')
+        email = user_info.get('kakao_account').get('email')
+        nickname = user_info.get('properties').get('nickname')
+
+        user, created = User.objects.get_or_create(kakao_id=kakao_id, defaults={'emailAddress': email, 'nickname': nickname})
+
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+
+        return Response({"access_token": access_token}, status=status.HTTP_200_OK)
